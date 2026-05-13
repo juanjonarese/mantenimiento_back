@@ -36,6 +36,10 @@ app.get("/", (req, res) => {
   res.json({ msg: "API Pintura Vial funcionando", version: "1.0.0" });
 });
 
+app.get("/ping", (req, res) => {
+  res.json({ ok: true, ts: new Date().toISOString() });
+});
+
 app.use((req, res) => {
   res.status(404).json({ msg: "Ruta no encontrada" });
 });
