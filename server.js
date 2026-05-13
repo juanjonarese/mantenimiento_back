@@ -7,13 +7,28 @@ const connectDB = require("./db/config.db");
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// CORS — acepta orígenes configurados vía env o permite todo en desarrollo
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(",").map((o) => o.trim())
+  : [];
+
 app.use(cors({
-  origin: process.env.NODE_ENV === "production"
-    ? process.env.FRONTEND_URL
-    : true, // permite cualquier origen en desarrollo
+  origin: (origin, callback) => {
+    // Sin origen (curl, Postman, server-to-server) → OK
+    if (!origin) return callback(null, true);
+    // En desarrollo → OK
+    if (process.env.NODE_ENV !== "production") return callback(null, true);
+    // En producción → verificar lista
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS bloqueado para origen: ${origin}`));
+  },
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
+
+// Responder preflight OPTIONS en todas las rutas
+app.options("*", cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
