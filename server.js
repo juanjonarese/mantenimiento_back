@@ -1,20 +1,21 @@
 require("dotenv").config();
 const express = require("express");
+const cors = require("cors");
 const rateLimit = require("express-rate-limit");
 const connectDB = require("./db/config.db");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// CORS — middleware sincrónico al tope, antes de cualquier operación async
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
-  res.header("Access-Control-Max-Age", "86400");
-  if (req.method === "OPTIONS") return res.sendStatus(204);
-  next();
-});
+// CORS — al tope, antes de cualquier operación async
+const corsOptions = {
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  maxAge: 86400,
+};
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
