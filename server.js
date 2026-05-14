@@ -9,10 +9,10 @@ const PORT = process.env.PORT || 3001;
 
 // CORS — al tope, antes de cualquier operación async
 const corsOptions = {
-  origin: "*",
+  origin: "https://mantenimiento-mocha.vercel.app",
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  maxAge: 86400,
+  credentials: true,
 };
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
