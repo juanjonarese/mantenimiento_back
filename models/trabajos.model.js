@@ -7,34 +7,57 @@ const FotoSchema = new Schema({
   subido: { type: Boolean, default: false },
 }, { _id: false });
 
+const MaterialSchema = new Schema({
+  nombre: { type: String },
+  cantidad: { type: Number },
+  unidad: { type: String },
+}, { _id: false });
+
+const ItemSchema = new Schema({
+  tipoTrabajo: { type: String },
+  largo: { type: Number },
+  ancho: { type: Number },
+  cantidad: { type: Number },
+  superficie: { type: Number },
+  materiales: [MaterialSchema],
+}, { _id: false });
+
 const TrabajoSchema = new Schema({
   idLocal: { type: Number, required: true, unique: true },
   fechaCarga: { type: Date, required: true },
   fechaModificacion: { type: Date },
-  usuario: { type: String, required: true, trim: true },
+  usuario: { type: String, default: '', trim: true },
   lat: { type: Number, required: true },
   lng: { type: Number, required: true },
   calle1: { type: String, required: true, trim: true },
   calle2: { type: String, required: true, trim: true },
-  tipoTrabajo: {
-    type: String,
-    required: true,
-    enum: ['Senda peatonal', 'Cordón', 'Rampa', 'Ochava', 'Flecha', 'Línea divisoria', 'Estacionamiento', 'Otros'],
-  },
-  largo: { type: Number, required: true },
-  ancho: { type: Number, required: true },
-  cantidad: { type: Number, required: true },
-  superficie: { type: Number, required: true },
+
+  // Formato nuevo: múltiples items por trabajo
+  items: [ItemSchema],
+  materiales: [MaterialSchema],
+
+  // Campos legacy (backward compat con datos viejos)
+  tipoTrabajo: { type: String },
+  largo: { type: Number },
+  ancho: { type: Number },
+  cantidad: { type: Number },
+
+  superficie: { type: Number, default: 0 },
   estadoOperativo: {
     type: String,
-    enum: ['Sin iniciar', 'En proceso', 'Finalizado'],
+    enum: ['Sin iniciar', 'En proceso', 'Finalizado', 'Terminado'],
     default: 'Sin iniciar',
   },
   estadoAdmin: {
     type: String,
-    enum: ['Sin certificar', 'Certificado'],
+    enum: ['Sin certificar', 'Certificado', 'Rechazado'],
     default: 'Sin certificar',
   },
+  motivoRechazo: { type: String },
+  documentacionCertificacion: { type: String },
+  notasCertificacion: { type: String },
+  fechaCertificacion: { type: Date },
+
   observaciones: { type: String, default: '' },
   linkDrive: { type: String, default: '' },
   linkMyMaps: { type: String, default: '' },

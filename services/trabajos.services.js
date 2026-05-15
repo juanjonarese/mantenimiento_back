@@ -95,10 +95,11 @@ const sincronizarTrabajosService = async (trabajos = []) => {
 };
 
 const obtenerEstadisticasService = async () => {
-  const [total, finalizados, certificados, superficie] = await Promise.all([
+  const [total, terminados, certificados, rechazados, superficie] = await Promise.all([
     Trabajo.countDocuments(),
-    Trabajo.countDocuments({ estadoOperativo: "Finalizado" }),
+    Trabajo.countDocuments({ estadoOperativo: { $in: ["Finalizado", "Terminado"] } }),
     Trabajo.countDocuments({ estadoAdmin: "Certificado" }),
+    Trabajo.countDocuments({ estadoAdmin: "Rechazado" }),
     Trabajo.aggregate([{ $group: { _id: null, total: { $sum: "$superficie" } } }]),
   ]);
 
@@ -106,10 +107,11 @@ const obtenerEstadisticasService = async () => {
     statusCode: 200,
     estadisticas: {
       total,
-      finalizados,
+      terminados,
       enProceso: await Trabajo.countDocuments({ estadoOperativo: "En proceso" }),
       sinIniciar: await Trabajo.countDocuments({ estadoOperativo: "Sin iniciar" }),
       certificados,
+      rechazados,
       sinCertificar: await Trabajo.countDocuments({ estadoAdmin: "Sin certificar" }),
       superficieTotal: superficie[0]?.total || 0,
     },

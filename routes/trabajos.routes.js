@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { verificarToken } = require("../middelware/auth.middleware");
 const {
   obtenerTodos,
   obtenerPorId,
@@ -10,12 +11,12 @@ const {
   obtenerEstadisticas,
 } = require("../controllers/trabajos.controller");
 
-router.get("/estadisticas", obtenerEstadisticas);
-router.get("/", obtenerTodos);
-router.get("/:id", obtenerPorId);
-router.post("/", crearTrabajo);
-router.post("/sync", sincronizarTrabajos);
-router.put("/:id", actualizarTrabajo);
-router.delete("/:id", eliminarTrabajo);
+router.get("/estadisticas", verificarToken, obtenerEstadisticas);
+router.get("/", verificarToken, obtenerTodos);
+router.get("/:id", verificarToken, obtenerPorId);
+router.post("/", verificarToken, crearTrabajo);
+router.post("/sync", verificarToken, sincronizarTrabajos);
+router.put("/:id", verificarToken, actualizarTrabajo);
+router.delete("/:id", verificarToken, eliminarTrabajo);
 
 module.exports = router;
