@@ -67,7 +67,7 @@ const iniciarSesion = async (req, res) => {
 const actualizarUsuario = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nombre, apellido, email, password } = req.body;
+    const { nombre, apellido, email, password, rol } = req.body;
 
     const usuario = await usuariosModel.findById(id);
     if (!usuario) {
@@ -78,6 +78,7 @@ const actualizarUsuario = async (req, res) => {
     if (nombre) usuario.nombre = nombre;
     if (apellido) usuario.apellido = apellido;
     if (email) usuario.email = email;
+    if (rol) usuario.rol = rol;
 
     // Si se envía nueva contraseña, validar y hashearla
     if (password) {
