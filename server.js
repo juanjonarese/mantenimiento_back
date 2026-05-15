@@ -8,8 +8,17 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Preflight OPTIONS — debe ser lo primero, antes de cualquier middleware
+const ORIGENES_PERMITIDOS = [
+  process.env.FRONT_URL,
+  "http://localhost:5173",
+  "http://localhost:4173",
+].filter(Boolean);
+
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "https://mantenimiento-mocha.vercel.app");
+  const origin = req.headers.origin;
+  if (ORIGENES_PERMITIDOS.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.setHeader("Access-Control-Allow-Credentials", "true");
