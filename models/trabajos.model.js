@@ -50,14 +50,17 @@ const TrabajoSchema = new Schema({
   },
   estadoAdmin: {
     type: String,
-    enum: ['Sin certificar', 'Certificado', 'Rechazado'],
+    enum: ['Sin certificar', 'En revisión', 'Certificado', 'Rechazado'],
     default: 'Sin certificar',
   },
   motivoRechazo: { type: String },
   documentacionCertificacion: { type: String },
   notasCertificacion: { type: String },
   fechaCertificacion: { type: Date },
+  emailRevision: { type: String },
+  docRevision: { type: String },
 
+  turno: { type: require("mongoose").Schema.Types.ObjectId, ref: "turnos", default: null },
   observaciones: { type: String, default: '' },
   linkDrive: { type: String, default: '' },
   linkMyMaps: { type: String, default: '' },

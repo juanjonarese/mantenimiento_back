@@ -159,7 +159,7 @@ const iniciarSesionService = async (body) => {
     const token = jwt.sign(
       { idUsuario: usuarioExiste._id, email: usuarioExiste.email, rol: usuarioExiste.rol },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "12h" }
     );
 
     return {
@@ -167,6 +167,9 @@ const iniciarSesionService = async (body) => {
       token,
       email: usuarioExiste.email,
       rol: usuarioExiste.rol,
+      nombre: usuarioExiste.nombre,
+      apellido: usuarioExiste.apellido,
+      idUsuario: usuarioExiste._id,
       statusCode: 200,
     };
   } catch (error) {

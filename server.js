@@ -43,6 +43,8 @@ app.use(async (req, res, next) => {
 // Rutas
 app.use("/api/usuarios", require("./routes/usuarios.routes"));
 app.use("/api/trabajos", require("./routes/trabajos.routes"));
+app.use("/api/turnos", require("./routes/turnos.routes"));
+app.use("/api/tipos-tarea", require("./routes/tiposTarea.routes"));
 
 // Ruta de prueba
 app.get("/", (req, res) => {
