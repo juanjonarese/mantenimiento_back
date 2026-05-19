@@ -20,6 +20,7 @@ const ItemSchema = new Schema({
   cantidad: { type: Number },
   superficie: { type: Number },
   materiales: [MaterialSchema],
+  fotos: [FotoSchema],
 }, { _id: false });
 
 const TrabajoSchema = new Schema({
