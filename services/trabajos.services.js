@@ -15,7 +15,7 @@ const obtenerTodosService = async (filtros = {}) => {
   if (filtros.usuario)          query.usuario = filtros.usuario;
   if (filtros.estadoOperativo)  query.estadoOperativo = filtros.estadoOperativo;
   if (filtros.estadoAdmin)      query.estadoAdmin = filtros.estadoAdmin;
-  if (filtros.tipoTrabajo)      query.tipoTrabajo = filtros.tipoTrabajo;
+  if (filtros.tipoTrabajo)      query.$or = [{ tipoTrabajo: filtros.tipoTrabajo }, { 'items.tipoTrabajo': filtros.tipoTrabajo }];
   if (filtros.desde || filtros.hasta) {
     query.fechaCarga = {};
     if (filtros.desde) query.fechaCarga.$gte = new Date(filtros.desde);
