@@ -9,6 +9,7 @@ const {
   eliminarTrabajo,
   sincronizarTrabajos,
   obtenerEstadisticas,
+  importarTrabajos,
 } = require("../controllers/trabajos.controller");
 
 router.get("/estadisticas", verificarToken, obtenerEstadisticas);
@@ -16,6 +17,7 @@ router.get("/", verificarToken, obtenerTodos);
 router.get("/:id", verificarToken, obtenerPorId);
 router.post("/", verificarToken, crearTrabajo);
 router.post("/sync", verificarToken, sincronizarTrabajos);
+router.post("/importar", verificarToken, importarTrabajos);
 router.put("/:id", verificarToken, actualizarTrabajo);
 router.delete("/:id", verificarToken, eliminarTrabajo);
 

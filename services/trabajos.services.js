@@ -118,6 +118,34 @@ const obtenerEstadisticasService = async () => {
   };
 };
 
+const importarTrabajosService = async (trabajos = []) => {
+  const base = Date.now();
+  const docs = trabajos.map((t, i) => ({
+    ...t,
+    idLocal: base + i,
+    lat: t.lat ?? 0,
+    lng: t.lng ?? 0,
+    calle1: t.calle1 || 'Sin nombre',
+    calle2: t.calle2 || '-',
+    fotos: [],
+    cantFotos: 0,
+  }));
+
+  const resultados = await Promise.allSettled(
+    docs.map((d) => new Trabajo(d).save())
+  );
+
+  const importados = resultados.filter((r) => r.status === 'fulfilled').length;
+  const fallidos = resultados.filter((r) => r.status === 'rejected').length;
+
+  return {
+    statusCode: importados > 0 ? 201 : 400,
+    msg: `Importados: ${importados}. Fallidos: ${fallidos}.`,
+    importados,
+    fallidos,
+  };
+};
+
 module.exports = {
   obtenerTodosService,
   obtenerPorIdService,
@@ -126,4 +154,5 @@ module.exports = {
   eliminarTrabajoService,
   sincronizarTrabajosService,
   obtenerEstadisticasService,
+  importarTrabajosService,
 };

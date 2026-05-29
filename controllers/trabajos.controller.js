@@ -6,6 +6,7 @@ const {
   eliminarTrabajoService,
   sincronizarTrabajosService,
   obtenerEstadisticasService,
+  importarTrabajosService,
 } = require("../services/trabajos.services");
 
 const obtenerTodos = async (req, res) => {
@@ -82,6 +83,20 @@ const obtenerEstadisticas = async (req, res) => {
   }
 };
 
+const importarTrabajos = async (req, res) => {
+  try {
+    const { trabajos } = req.body;
+    if (!Array.isArray(trabajos) || trabajos.length === 0) {
+      return res.status(400).json({ msg: "Se requiere un array de trabajos" });
+    }
+    const resultado = await importarTrabajosService(trabajos);
+    res.status(resultado.statusCode).json(resultado);
+  } catch (error) {
+    console.error("Error en importarTrabajos:", error);
+    res.status(500).json({ msg: "Error interno del servidor" });
+  }
+};
+
 module.exports = {
   obtenerTodos,
   obtenerPorId,
@@ -90,4 +105,5 @@ module.exports = {
   eliminarTrabajo,
   sincronizarTrabajos,
   obtenerEstadisticas,
+  importarTrabajos,
 };
