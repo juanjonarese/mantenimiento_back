@@ -64,6 +64,9 @@ const TrabajoSchema = new Schema({
   nroFactura: { type: String },
   fechaFacturacion: { type: Date },
 
+  clienteId:     { type: String, default: '' },
+  clienteNombre: { type: String, default: '' },
+
   turno: { type: require("mongoose").Schema.Types.ObjectId, ref: "turnos", default: null },
   observaciones: { type: String, default: '' },
   linkDrive: { type: String, default: '' },

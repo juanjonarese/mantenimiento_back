@@ -54,9 +54,31 @@ const obtenerTodosLosTurnosService = async () => {
   }
 };
 
+const obtenerConsumoMaterialesService = async () => {
+  try {
+    const turnos = await TurnoModel.find({ estado: "cerrado" }, { materiales: 1 });
+    const mapa = {};
+    turnos.forEach(({ materiales }) => {
+      (materiales || []).forEach(({ nombre, cantidad, unidad }) => {
+        const key = `${nombre}||${unidad || ""}`;
+        if (!mapa[key]) mapa[key] = { nombre, unidad: unidad || "", cantidad: 0 };
+        mapa[key].cantidad += cantidad || 0;
+      });
+    });
+    const consumo = Object.values(mapa)
+      .map((m) => ({ ...m, cantidad: parseFloat(m.cantidad.toFixed(3)) }))
+      .sort((a, b) => b.cantidad - a.cantidad);
+    return { consumo, statusCode: 200 };
+  } catch (error) {
+    console.error("Error en obtenerConsumoMaterialesService:", error);
+    return { consumo: [], statusCode: 500 };
+  }
+};
+
 module.exports = {
   abrirTurnoService,
   obtenerTurnoActivoService,
   cerrarTurnoService,
   obtenerTodosLosTurnosService,
+  obtenerConsumoMaterialesService,
 };

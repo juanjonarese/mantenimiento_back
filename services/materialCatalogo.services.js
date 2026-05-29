@@ -26,10 +26,11 @@ const crearMaterialService = async (datos) => {
     const existente = await Material.findOne({ nombre: datos.nombre.trim() });
     if (existente) return { msg: "Ya existe un material con ese nombre", statusCode: 409 };
     const material = await Material.create({
-      codigo: datos.codigo?.trim() || "",
-      nombre: datos.nombre.trim(),
-      stock:  parseFloat(datos.stock) || 0,
-      unidad: datos.unidad || "litros",
+      codigo:     datos.codigo?.trim() || "",
+      nombre:     datos.nombre.trim(),
+      stock:      parseFloat(datos.stock) || 0,
+      unidad:     datos.unidad || "litros",
+      tiposTarea: Array.isArray(datos.tiposTarea) ? datos.tiposTarea : [],
     });
     return { material, statusCode: 201 };
   } catch (error) {
@@ -41,10 +42,11 @@ const crearMaterialService = async (datos) => {
 const actualizarMaterialService = async (id, datos) => {
   try {
     const material = await Material.findByIdAndUpdate(id, {
-      codigo: datos.codigo?.trim() || "",
-      nombre: datos.nombre?.trim(),
-      stock:  parseFloat(datos.stock) || 0,
-      unidad: datos.unidad,
+      codigo:     datos.codigo?.trim() || "",
+      nombre:     datos.nombre?.trim(),
+      stock:      parseFloat(datos.stock) || 0,
+      unidad:     datos.unidad,
+      tiposTarea: Array.isArray(datos.tiposTarea) ? datos.tiposTarea : [],
     }, { new: true, runValidators: true });
     if (!material) return { msg: "Material no encontrado", statusCode: 404 };
     return { material, statusCode: 200 };
