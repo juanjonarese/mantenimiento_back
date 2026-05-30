@@ -16,6 +16,22 @@ router.get('/test', (req, res) => {
   });
 });
 
+// Diagnóstico: intenta subir una imagen de prueba real a Cloudinary
+router.get('/test-upload', async (req, res) => {
+  try {
+    const cloudinary = require('../config/cloudinary');
+    // Pixel rojo 1x1 en base64
+    const testImg = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg==';
+    const result = await cloudinary.uploader.upload(testImg, {
+      folder: 'pintura-vial/test',
+      public_id: `test-${Date.now()}`,
+    });
+    res.json({ ok: true, url: result.secure_url });
+  } catch (error) {
+    res.json({ ok: false, error: error.message });
+  }
+});
+
 router.post('/upload', verificarToken, subirFoto);
 
 module.exports = router;
