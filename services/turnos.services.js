@@ -1,4 +1,5 @@
 const TurnoModel = require("../models/turnos.model");
+const MaterialCatalogo = require("../models/materialCatalogo.model");
 
 const abrirTurnoService = async (idSupervisor) => {
   try {
@@ -34,6 +35,20 @@ const cerrarTurnoService = async (idTurno, idSupervisor, materiales, observacion
     turno.materiales = materiales || [];
     turno.observaciones = observaciones || "";
     await turno.save();
+
+    // Descontar stock de cada material usado
+    if (materiales && materiales.length > 0) {
+      await Promise.allSettled(
+        materiales.map(async ({ materialId, nombre, cantidad }) => {
+          const mat = materialId
+            ? await MaterialCatalogo.findById(materialId)
+            : await MaterialCatalogo.findOne({ nombre, activo: true });
+          if (!mat) return;
+          const nuevoStock = Math.max(0, (mat.stock || 0) - (cantidad || 0));
+          await MaterialCatalogo.findByIdAndUpdate(mat._id, { stock: nuevoStock });
+        })
+      );
+    }
 
     return { turno, statusCode: 200 };
   } catch (error) {
