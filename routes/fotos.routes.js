@@ -3,8 +3,8 @@ const router = express.Router();
 const { verificarToken } = require('../middelware/auth.middleware');
 const { subirFoto } = require('../controllers/fotos.controller');
 
-// Diagnóstico: verifica si Cloudinary está configurado
-router.get('/test', verificarToken, (req, res) => {
+// Diagnóstico: verifica si Cloudinary está configurado (sin auth)
+router.get('/test', (req, res) => {
   const configurado = !!(
     process.env.CLOUDINARY_CLOUD_NAME &&
     process.env.CLOUDINARY_API_KEY &&
