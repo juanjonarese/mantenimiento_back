@@ -30,6 +30,7 @@ const crearMaterialService = async (datos) => {
       nombre:     datos.nombre.trim(),
       stock:      parseFloat(datos.stock) || 0,
       unidad:     datos.unidad || "litros",
+      tamano:     datos.tamano?.trim() || "",
       tiposTarea: Array.isArray(datos.tiposTarea) ? datos.tiposTarea : [],
     });
     return { material, statusCode: 201 };
@@ -46,6 +47,7 @@ const actualizarMaterialService = async (id, datos) => {
       nombre:     datos.nombre?.trim(),
       stock:      parseFloat(datos.stock) || 0,
       unidad:     datos.unidad,
+      tamano:     datos.tamano?.trim() || "",
       tiposTarea: Array.isArray(datos.tiposTarea) ? datos.tiposTarea : [],
     }, { new: true, runValidators: true });
     if (!material) return { msg: "Material no encontrado", statusCode: 404 };
