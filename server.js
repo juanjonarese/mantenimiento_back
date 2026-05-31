@@ -40,6 +40,17 @@ app.use(async (req, res, next) => {
   }
 });
 
+// Rate limiting en endpoints de autenticación
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { msg: "Demasiados intentos. Intentá de nuevo en 15 minutos." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use("/api/usuarios/login",    loginLimiter);
+app.use("/api/usuarios/registro", loginLimiter);
+
 // Rutas
 app.use("/api/usuarios", require("./routes/usuarios.routes"));
 app.use("/api/trabajos", require("./routes/trabajos.routes"));

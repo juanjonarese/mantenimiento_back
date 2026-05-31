@@ -159,7 +159,7 @@ const iniciarSesionService = async (body) => {
     const token = jwt.sign(
       { idUsuario: usuarioExiste._id, email: usuarioExiste.email, rol: usuarioExiste.rol },
       process.env.JWT_SECRET,
-      { expiresIn: "12h" }
+      { expiresIn: "1h" }
     );
 
     return {

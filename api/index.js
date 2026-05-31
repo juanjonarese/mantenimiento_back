@@ -5,11 +5,21 @@ const connectDB = require("../db/config.db");
 
 const app = express();
 
-// CORS manual — funciona en cualquier entorno serverless
+// CORS con whitelist — igual que server.js
+const ORIGENES_PERMITIDOS = [
+  process.env.FRONT_URL,
+  "http://localhost:5173",
+  "http://localhost:4173",
+].filter(Boolean);
+
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  const origin = req.headers.origin;
+  if (ORIGENES_PERMITIDOS.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
   if (req.method === "OPTIONS") return res.status(200).end();
   next();
 });
