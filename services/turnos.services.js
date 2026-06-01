@@ -1,5 +1,6 @@
 const TurnoModel = require("../models/turnos.model");
 const MaterialCatalogo = require("../models/materialCatalogo.model");
+const Trabajo = require("../models/trabajos.model");
 
 const abrirTurnoService = async (idSupervisor) => {
   try {
@@ -48,6 +49,23 @@ const cerrarTurnoService = async (idTurno, idSupervisor, materiales, observacion
           await MaterialCatalogo.findByIdAndUpdate(mat._id, { stock: nuevoStock });
         })
       );
+
+      // Distribuir materiales proporcionalmente por m² entre los trabajos del turno
+      const trabajosDelTurno = await Trabajo.find({ turno: idTurno });
+      const totalSuperficie = trabajosDelTurno.reduce((s, t) => s + (t.superficie || 0), 0);
+      if (trabajosDelTurno.length > 0 && totalSuperficie > 0) {
+        await Promise.allSettled(
+          trabajosDelTurno.map((t) => {
+            const prop = (t.superficie || 0) / totalSuperficie;
+            const materialesTrabajo = materiales.map(({ nombre, cantidad, unidad }) => ({
+              nombre,
+              cantidad: parseFloat((cantidad * prop).toFixed(4)),
+              unidad: unidad || "",
+            }));
+            return Trabajo.findByIdAndUpdate(t._id, { materiales: materialesTrabajo });
+          })
+        );
+      }
     }
 
     return { turno, statusCode: 200 };
