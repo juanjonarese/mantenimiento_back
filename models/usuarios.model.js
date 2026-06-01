@@ -28,9 +28,10 @@ const UsuarioSchema = new Schema({
 
   rol: {
     type: String,
-    enum: ["admin", "supervisor", "usuario"],
+    enum: ["admin", "supervisor", "usuario", "cliente"],
     default: "supervisor",
   },
+  clienteNombre: { type: String, default: "", trim: true },
 }, {
   timestamps: true,
 });

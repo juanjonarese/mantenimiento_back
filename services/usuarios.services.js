@@ -41,6 +41,8 @@ const crearUsuarioService = async (body) => {
       apellido: body.apellido,
       email: body.email,
       password: passwordHasheada,
+      rol: body.rol || 'supervisor',
+      clienteNombre: body.clienteNombre || '',
     });
 
     // Guardar el usuario
@@ -170,6 +172,7 @@ const iniciarSesionService = async (body) => {
       nombre: usuarioExiste.nombre,
       apellido: usuarioExiste.apellido,
       idUsuario: usuarioExiste._id,
+      clienteNombre: usuarioExiste.clienteNombre || '',
       statusCode: 200,
     };
   } catch (error) {

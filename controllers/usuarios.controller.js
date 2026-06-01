@@ -54,10 +54,8 @@ const eliminarUnUsuarioPorId = async (req, res) => {
 
 const iniciarSesion = async (req, res) => {
   try {
-    const { statusCode, msg, token, email, rol } = await iniciarSesionService(
-      req.body
-    );
-    res.status(statusCode).json({ msg, token, email, rol });
+    const { statusCode, msg, token, email, rol, nombre, apellido, idUsuario, clienteNombre } = await iniciarSesionService(req.body);
+    res.status(statusCode).json({ msg, token, email, rol, nombre, apellido, idUsuario, clienteNombre });
   } catch (error) {
     console.error("Error en iniciarSesion controller:", error);
     res.status(500).json({ msg: "Error interno del servidor" });
@@ -79,6 +77,7 @@ const actualizarUsuario = async (req, res) => {
     if (apellido) usuario.apellido = apellido;
     if (email) usuario.email = email;
     if (rol) usuario.rol = rol;
+    if (req.body.clienteNombre !== undefined) usuario.clienteNombre = req.body.clienteNombre;
 
     // Si se envía nueva contraseña, validar y hashearla
     if (password) {
