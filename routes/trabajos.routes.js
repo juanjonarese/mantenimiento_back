@@ -10,9 +10,11 @@ const {
   sincronizarTrabajos,
   obtenerEstadisticas,
   importarTrabajos,
+  obtenerConsumoMateriales,
 } = require("../controllers/trabajos.controller");
 
-router.get("/estadisticas", verificarToken, obtenerEstadisticas);
+router.get("/estadisticas",        verificarToken, obtenerEstadisticas);
+router.get("/consumo-materiales",  verificarToken, obtenerConsumoMateriales);
 router.get("/", verificarToken, obtenerTodos);
 router.get("/:id", verificarToken, obtenerPorId);
 router.post("/", verificarToken, crearTrabajo);

@@ -146,6 +146,49 @@ const importarTrabajosService = async (trabajos = []) => {
   };
 };
 
+const normStr = (s) =>
+  (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+
+const matchMat = (catalogName, trabajoName) => {
+  const na = normStr(catalogName);
+  const nb = normStr(trabajoName);
+  if (na === nb) return true;
+  const longestKey = na.split(/\s+/).filter((w) => w.length >= 6).sort((x, y) => y.length - x.length)[0];
+  return longestKey ? nb.includes(longestKey) : false;
+};
+
+const obtenerConsumoMaterialesService = async () => {
+  try {
+    const Material = require("../models/materialCatalogo.model");
+    const [trabajos, catalogo] = await Promise.all([
+      Trabajo.find({}, { materiales: 1, items: 1 }).lean(),
+      Material.find({ activo: true }, { nombre: 1, unidad: 1 }).lean(),
+    ]);
+    const mapa = {};
+    trabajos.forEach((t) => {
+      const todos = [
+        ...(t.materiales || []),
+        ...(t.items || []).flatMap((i) => i.materiales || []),
+      ];
+      todos.forEach(({ nombre, cantidad, unidad }) => {
+        if (!nombre) return;
+        const catEntry = catalogo.find((c) => matchMat(c.nombre, nombre));
+        const k = catEntry ? catEntry.nombre : nombre.trim();
+        const u = catEntry ? catEntry.unidad : (unidad || '');
+        if (!mapa[k]) mapa[k] = { nombre: k, unidad: u, cantidad: 0 };
+        mapa[k].cantidad += cantidad || 0;
+      });
+    });
+    const consumo = Object.values(mapa)
+      .map((m) => ({ ...m, cantidad: parseFloat(m.cantidad.toFixed(2)) }))
+      .sort((a, b) => b.cantidad - a.cantidad);
+    return { consumo, statusCode: 200 };
+  } catch (error) {
+    console.error("Error en obtenerConsumoMaterialesService:", error);
+    return { consumo: [], statusCode: 500 };
+  }
+};
+
 module.exports = {
   obtenerTodosService,
   obtenerPorIdService,
@@ -155,4 +198,5 @@ module.exports = {
   sincronizarTrabajosService,
   obtenerEstadisticasService,
   importarTrabajosService,
+  obtenerConsumoMaterialesService,
 };

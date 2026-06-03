@@ -1,8 +1,19 @@
 const Material = require("../models/materialCatalogo.model");
+const StockEntrada = require("../models/stockEntrada.model");
+
+const sortPorCodigo = (lista) =>
+  lista.sort((a, b) => {
+    const ca = a.codigo || '';
+    const cb = b.codigo || '';
+    if (!ca && !cb) return a.nombre.localeCompare(b.nombre, 'es');
+    if (!ca) return 1;
+    if (!cb) return -1;
+    return ca.localeCompare(cb, 'es') || a.nombre.localeCompare(b.nombre, 'es');
+  });
 
 const obtenerMaterialesService = async () => {
   try {
-    const materiales = await Material.find({ activo: true }).sort({ nombre: 1 });
+    const materiales = sortPorCodigo(await Material.find({ activo: true }).lean());
     return { materiales, statusCode: 200 };
   } catch (error) {
     console.error("Error en obtenerMaterialesService:", error);
@@ -12,7 +23,7 @@ const obtenerMaterialesService = async () => {
 
 const obtenerTodosService = async () => {
   try {
-    const materiales = await Material.find().sort({ nombre: 1 });
+    const materiales = sortPorCodigo(await Material.find().lean());
     return { materiales, statusCode: 200 };
   } catch (error) {
     console.error("Error en obtenerTodosService:", error);
@@ -69,10 +80,54 @@ const eliminarMaterialService = async (id) => {
   }
 };
 
+const registrarEntradaService = async (materialId, datos) => {
+  try {
+    const material = await Material.findById(materialId);
+    if (!material || !material.activo) return { msg: "Material no encontrado", statusCode: 404 };
+    const cantidad = parseFloat(datos.cantidad);
+    if (isNaN(cantidad) || cantidad === 0) return { msg: "La cantidad no puede ser 0", statusCode: 400 };
+    const entrada = await StockEntrada.create({
+      material:    materialId,
+      cantidad,
+      fecha:       datos.fecha ? new Date(datos.fecha) : new Date(),
+      descripcion: datos.descripcion?.trim() || "",
+    });
+    return { entrada, statusCode: 201 };
+  } catch (error) {
+    console.error("Error en registrarEntradaService:", error);
+    return { msg: "Error al registrar entrada", statusCode: 500 };
+  }
+};
+
+const obtenerEntradasService = async (materialId) => {
+  try {
+    const entradas = await StockEntrada.find({ material: materialId }).sort({ fecha: -1 });
+    return { entradas, statusCode: 200 };
+  } catch (error) {
+    console.error("Error en obtenerEntradasService:", error);
+    return { entradas: [], statusCode: 500 };
+  }
+};
+
+const obtenerTotalesEntradasService = async () => {
+  try {
+    const totales = await StockEntrada.aggregate([
+      { $group: { _id: "$material", total: { $sum: "$cantidad" } } },
+    ]);
+    return { totales, statusCode: 200 };
+  } catch (error) {
+    console.error("Error en obtenerTotalesEntradasService:", error);
+    return { totales: [], statusCode: 500 };
+  }
+};
+
 module.exports = {
   obtenerMaterialesService,
   obtenerTodosService,
   crearMaterialService,
   actualizarMaterialService,
   eliminarMaterialService,
+  registrarEntradaService,
+  obtenerEntradasService,
+  obtenerTotalesEntradasService,
 };

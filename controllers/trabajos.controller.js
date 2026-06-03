@@ -7,6 +7,7 @@ const {
   sincronizarTrabajosService,
   obtenerEstadisticasService,
   importarTrabajosService,
+  obtenerConsumoMaterialesService,
 } = require("../services/trabajos.services");
 
 const obtenerTodos = async (req, res) => {
@@ -97,6 +98,16 @@ const importarTrabajos = async (req, res) => {
   }
 };
 
+const obtenerConsumoMateriales = async (req, res) => {
+  try {
+    const { consumo, statusCode } = await obtenerConsumoMaterialesService();
+    res.status(statusCode).json({ consumo });
+  } catch (error) {
+    console.error("Error en obtenerConsumoMateriales:", error);
+    res.status(500).json({ msg: "Error interno del servidor" });
+  }
+};
+
 module.exports = {
   obtenerTodos,
   obtenerPorId,
@@ -106,4 +117,5 @@ module.exports = {
   sincronizarTrabajos,
   obtenerEstadisticas,
   importarTrabajos,
+  obtenerConsumoMateriales,
 };
