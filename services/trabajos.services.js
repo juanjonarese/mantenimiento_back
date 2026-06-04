@@ -1,4 +1,5 @@
 const Trabajo = require("../models/trabajos.model");
+const { Types } = require("mongoose");
 
 // Excluye base64 de fotos — solo guarda metadatos
 function sanitizarFotos(fotos = []) {
@@ -16,6 +17,7 @@ const obtenerTodosService = async (filtros = {}) => {
   if (filtros.estadoOperativo)  query.estadoOperativo = filtros.estadoOperativo;
   if (filtros.estadoAdmin)      query.estadoAdmin = filtros.estadoAdmin;
   if (filtros.tipoTrabajo)      query.$or = [{ tipoTrabajo: filtros.tipoTrabajo }, { 'items.tipoTrabajo': filtros.tipoTrabajo }];
+  if (filtros.turno && Types.ObjectId.isValid(filtros.turno)) query.turno = new Types.ObjectId(filtros.turno);
   if (filtros.desde || filtros.hasta) {
     query.fechaCarga = {};
     if (filtros.desde) query.fechaCarga.$gte = new Date(filtros.desde);
