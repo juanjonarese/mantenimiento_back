@@ -4,6 +4,8 @@ const {
   cerrarTurnoService,
   obtenerTodosLosTurnosService,
   obtenerConsumoMaterialesService,
+  obtenerTurnosConTrabajosService,
+  eliminarTurnosService,
 } = require("../services/turnos.services");
 
 const abrirTurno = async (req, res) => {
@@ -59,4 +61,23 @@ const obtenerConsumoMateriales = async (req, res) => {
   }
 };
 
-module.exports = { abrirTurno, obtenerTurnoActivo, cerrarTurno, obtenerTodosTurnos, obtenerConsumoMateriales };
+const obtenerTurnosConTrabajos = async (req, res) => {
+  try {
+    const { turnos, statusCode } = await obtenerTurnosConTrabajosService();
+    res.status(statusCode).json({ turnos });
+  } catch (error) {
+    res.status(500).json({ msg: "Error interno del servidor" });
+  }
+};
+
+const eliminarTurnos = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    const { msg, statusCode } = await eliminarTurnosService(ids);
+    res.status(statusCode).json({ msg });
+  } catch (error) {
+    res.status(500).json({ msg: "Error interno del servidor" });
+  }
+};
+
+module.exports = { abrirTurno, obtenerTurnoActivo, cerrarTurno, obtenerTodosTurnos, obtenerConsumoMateriales, obtenerTurnosConTrabajos, eliminarTurnos };

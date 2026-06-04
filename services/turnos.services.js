@@ -108,10 +108,82 @@ const obtenerConsumoMaterialesService = async () => {
   }
 };
 
+const obtenerTurnosConTrabajosService = async () => {
+  try {
+    const [turnos, trabajosRaw] = await Promise.all([
+      TurnoModel.find()
+        .populate("supervisor", "nombre apellido")
+        .sort({ fechaInicio: -1 })
+        .lean(),
+      Trabajo.find(
+        { turno: { $exists: true, $ne: null } },
+        { turno: 1, tipoTrabajo: 1, superficie: 1, items: 1, clienteNombre: 1 }
+      ).lean(),
+    ]);
+
+    const gruposPorTurno = {};
+    trabajosRaw.forEach((t) => {
+      const key = String(t.turno);
+      if (!gruposPorTurno[key]) gruposPorTurno[key] = [];
+      gruposPorTurno[key].push(t);
+    });
+
+
+    const resultado = turnos.map((turno) => {
+      const trabajos = gruposPorTurno[String(turno._id)] || [];
+      const m2Map = {};
+      trabajos.forEach((t) => {
+        const tipos = t.items?.length > 0
+          ? t.items.map((i) => ({ tipo: i.tipoTrabajo, m2: i.superficie || 0 }))
+          : [{ tipo: t.tipoTrabajo, m2: t.superficie || 0 }];
+        tipos.forEach(({ tipo, m2 }) => {
+          if (!tipo) return;
+          m2Map[tipo] = (m2Map[tipo] || 0) + m2;
+        });
+      });
+      const m2PorTipo = Object.entries(m2Map)
+        .map(([tipo, m2]) => ({ tipo, m2: parseFloat(m2.toFixed(2)) }))
+        .sort((a, b) => b.m2 - a.m2);
+      const clientes = [...new Set(
+        trabajos.map((t) => t.clienteNombre).filter(Boolean)
+      )];
+      return {
+        ...turno,
+        cantidadTrabajos: trabajos.length,
+        m2PorTipo,
+        totalM2: parseFloat(m2PorTipo.reduce((s, t) => s + t.m2, 0).toFixed(2)),
+        clientes,
+      };
+    });
+
+    return { turnos: resultado, statusCode: 200 };
+  } catch (error) {
+    console.error("Error en obtenerTurnosConTrabajosService:", error);
+    return { turnos: [], statusCode: 500 };
+  }
+};
+
+const eliminarTurnosService = async (ids) => {
+  try {
+    if (!Array.isArray(ids) || ids.length === 0)
+      return { msg: "No se proporcionaron IDs", statusCode: 400 };
+    await Promise.all([
+      TurnoModel.deleteMany({ _id: { $in: ids } }),
+      Trabajo.updateMany({ turno: { $in: ids } }, { $unset: { turno: "" } }),
+    ]);
+    return { msg: `${ids.length} turno(s) eliminado(s)`, statusCode: 200 };
+  } catch (error) {
+    console.error("Error en eliminarTurnosService:", error);
+    return { msg: "Error al eliminar turnos", statusCode: 500 };
+  }
+};
+
 module.exports = {
   abrirTurnoService,
   obtenerTurnoActivoService,
   cerrarTurnoService,
   obtenerTodosLosTurnosService,
   obtenerConsumoMaterialesService,
+  obtenerTurnosConTrabajosService,
+  eliminarTurnosService,
 };
