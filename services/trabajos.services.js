@@ -174,7 +174,8 @@ const obtenerConsumoMaterialesService = async () => {
       ];
       todos.forEach(({ nombre, cantidad, unidad }) => {
         if (!nombre) return;
-        const catEntry = catalogo.find((c) => matchMat(c.nombre, nombre));
+        const catEntry = catalogo.find((c) => normStr(c.nombre) === normStr(nombre))
+          || catalogo.find((c) => matchMat(c.nombre, nombre));
         const k = catEntry ? catEntry.nombre : nombre.trim();
         const u = catEntry ? catEntry.unidad : (unidad || '');
         if (!mapa[k]) mapa[k] = { nombre: k, unidad: u, cantidad: 0 };
