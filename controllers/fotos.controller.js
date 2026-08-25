@@ -1,4 +1,3 @@
-const cloudinary = require('../config/cloudinary');
 const { subirAR2, r2Configurado, borrarDeR2PorUrl } = require('../config/r2');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('ffmpeg-static');
@@ -8,14 +7,31 @@ const fs = require('fs');
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
-// Destino de los archivos: 'r2' (Cloudflare R2) o 'cloudinary' (respaldo).
-const DRIVER = (process.env.STORAGE_DRIVER || 'cloudinary').toLowerCase();
+// Único destino de archivos: Cloudflare R2. No hay respaldo a Cloudinary:
+// si R2 no está configurado el upload falla con 503 en vez de irse a otro lado.
+const VARS_R2 = ['R2_ENDPOINT', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET', 'R2_PUBLIC_URL'];
+
+function faltantesR2() {
+  return VARS_R2.filter((v) => !process.env[v]);
+}
+
+// Corta el request si falta alguna variable de R2. Devuelve true si ya respondió.
+function abortarSinR2(res) {
+  if (r2Configurado()) return false;
+  const faltan = faltantesR2();
+  console.error('R2 no configurado. Faltan variables:', faltan.join(', '));
+  res.status(503).json({
+    msg: `R2 no está configurado en el servidor. Faltan: ${faltan.join(', ')}`,
+    faltan,
+  });
+  return true;
+}
 
 function sanitizarCarpeta(texto) {
   return (texto || 'sin-ubicacion')
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
     .slice(0, 60);
@@ -30,41 +46,40 @@ function carpetaUbicacion(calle1, calle2) {
   return `pintura-vial/${mes}/${ubicacion}`;
 }
 
+// Diagnóstico: permite verificar desde producción a dónde van los archivos.
+// No expone claves, sólo si están presentes.
+const estadoStorage = (req, res) => {
+  res.status(200).json({
+    driver: 'r2',
+    configurado: r2Configurado(),
+    faltan: faltantesR2(),
+    bucket: process.env.R2_BUCKET || null,
+    publicUrl: process.env.R2_PUBLIC_URL || null,
+  });
+};
+
 const subirFoto = async (req, res) => {
   try {
     const { data, nombre, calle1, calle2 } = req.body;
     if (!data) return res.status(400).json({ msg: 'Se requiere el archivo en base64' });
+    if (abortarSinR2(res)) return;
 
     const folder = carpetaUbicacion(calle1, calle2);
     const baseName = `${Date.now()}-${(nombre || 'archivo').replace(/\.[^.]+$/, '')}`;
 
-    if (DRIVER === 'r2') {
-      if (!r2Configurado()) {
-        return res.status(503).json({ msg: 'R2 no está configurado en el servidor' });
-      }
-      // data viene como data URI: "data:image/jpeg;base64,...."
-      const match = /^data:(.+);base64,(.*)$/s.exec(data);
-      const contentType = match ? match[1] : 'image/jpeg';
-      const base64 = match ? match[2] : data;
-      const buffer = Buffer.from(base64, 'base64');
-      const ext = (contentType.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
-      const key = `${folder}/${baseName}.${ext}`;
-      const url = await subirAR2(buffer, key, contentType);
-      return res.status(200).json({ url, publicId: key, folder });
-    }
+    // data viene como data URI: "data:image/jpeg;base64,...."
+    const match = /^data:(.+);base64,(.*)$/s.exec(data);
+    const contentType = match ? match[1] : 'image/jpeg';
+    const base64 = match ? match[2] : data;
+    const buffer = Buffer.from(base64, 'base64');
+    const ext = (contentType.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
+    const key = `${folder}/${baseName}.${ext}`;
 
-    // Respaldo: Cloudinary
-    if (!process.env.CLOUDINARY_CLOUD_NAME) {
-      return res.status(503).json({ msg: 'Cloudinary no está configurado en el servidor' });
-    }
-    const result = await cloudinary.uploader.upload(data, {
-      folder,
-      resource_type: 'image',
-      public_id: baseName,
-    });
-    res.status(200).json({ url: result.secure_url, publicId: result.public_id, folder });
+    const url = await subirAR2(buffer, key, contentType);
+    console.log(`Foto subida a R2: ${key}`);
+    res.status(200).json({ url, publicId: key, folder });
   } catch (error) {
-    console.error('Error al subir foto:', error);
+    console.error('Error al subir foto a R2:', error);
     res.status(500).json({ msg: error.message || 'Error al subir el archivo' });
   }
 };
@@ -75,14 +90,7 @@ const subirVideo = async (req, res) => {
 
   try {
     if (!req.file) return res.status(400).json({ msg: 'Se requiere un video' });
-
-    if (DRIVER === 'r2') {
-      if (!r2Configurado()) {
-        return res.status(503).json({ msg: 'R2 no está configurado en el servidor' });
-      }
-    } else if (!process.env.CLOUDINARY_CLOUD_NAME) {
-      return res.status(503).json({ msg: 'Cloudinary no está configurado en el servidor' });
-    }
+    if (abortarSinR2(res)) return;
 
     const { nombre, calle1, calle2 } = req.body;
     const ts = Date.now();
@@ -116,23 +124,13 @@ const subirVideo = async (req, res) => {
 
     const folder   = carpetaUbicacion(calle1, calle2);
     const baseName = `${ts}-${(nombre || 'video').replace(/\.[^.]+$/, '')}`;
+    const key      = `${folder}/${baseName}.mp4`;
 
-    if (DRIVER === 'r2') {
-      const buffer = fs.readFileSync(outputPath);
-      const key = `${folder}/${baseName}.mp4`;
-      const url = await subirAR2(buffer, key, 'video/mp4');
-      return res.status(200).json({ url, publicId: key, folder });
-    }
-
-    // Respaldo: Cloudinary
-    const result = await cloudinary.uploader.upload(outputPath, {
-      folder,
-      resource_type: 'video',
-      public_id: baseName,
-    });
-    res.status(200).json({ url: result.secure_url, publicId: result.public_id, folder });
+    const url = await subirAR2(fs.readFileSync(outputPath), key, 'video/mp4');
+    console.log(`Video subido a R2: ${key}`);
+    res.status(200).json({ url, publicId: key, folder });
   } catch (error) {
-    console.error('Error al comprimir/subir video:', error);
+    console.error('Error al comprimir/subir video a R2:', error);
     res.status(500).json({ msg: error.message || 'Error al procesar el video' });
   } finally {
     if (inputPath  && fs.existsSync(inputPath))  fs.unlinkSync(inputPath);
@@ -145,14 +143,7 @@ const eliminarFoto = async (req, res) => {
   try {
     const { url } = req.body;
     if (!url) return res.status(400).json({ msg: 'Se requiere la URL del archivo' });
-
-    if (DRIVER !== 'r2') {
-      // Con Cloudinary no guardamos el public_id, así que no se puede borrar acá.
-      return res.status(200).json({ borrado: false, msg: `Borrado desactivado (driver: ${DRIVER})` });
-    }
-    if (!r2Configurado()) {
-      return res.status(503).json({ msg: 'R2 no está configurado en el servidor' });
-    }
+    if (abortarSinR2(res)) return;
 
     const borrado = await borrarDeR2PorUrl(url);
     res.status(200).json({
@@ -165,4 +156,4 @@ const eliminarFoto = async (req, res) => {
   }
 };
 
-module.exports = { subirFoto, subirVideo, eliminarFoto };
+module.exports = { subirFoto, subirVideo, eliminarFoto, estadoStorage };

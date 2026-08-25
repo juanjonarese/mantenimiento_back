@@ -2,7 +2,7 @@ const express = require('express');
 const multer  = require('multer');
 const router  = express.Router();
 const { verificarToken } = require('../middelware/auth.middleware');
-const { subirFoto, subirVideo, eliminarFoto } = require('../controllers/fotos.controller');
+const { subirFoto, subirVideo, eliminarFoto, estadoStorage } = require('../controllers/fotos.controller');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -13,6 +13,7 @@ const upload = multer({
   },
 });
 
+router.get('/estado',        estadoStorage);
 router.post('/upload',       verificarToken, subirFoto);
 router.post('/upload-video', verificarToken, upload.single('video'), subirVideo);
 router.delete('/',           verificarToken, eliminarFoto);
