@@ -1,8 +1,21 @@
 const express = require('express');
-const router = express.Router();
+const multer  = require('multer');
+const router  = express.Router();
 const { verificarToken } = require('../middelware/auth.middleware');
-const { subirFoto } = require('../controllers/fotos.controller');
+const { subirFoto, subirVideo, eliminarFoto, estadoStorage } = require('../controllers/fotos.controller');
 
-router.post('/upload', verificarToken, subirFoto);
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('video/')) cb(null, true);
+    else cb(new Error('Solo se aceptan archivos de video'));
+  },
+});
+
+router.get('/estado',        estadoStorage);
+router.post('/upload',       verificarToken, subirFoto);
+router.post('/upload-video', verificarToken, upload.single('video'), subirVideo);
+router.delete('/',           verificarToken, eliminarFoto);
 
 module.exports = router;

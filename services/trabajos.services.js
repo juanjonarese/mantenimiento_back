@@ -1,5 +1,16 @@
 const Trabajo = require("../models/trabajos.model");
 const { Types } = require("mongoose");
+const { borrarDeR2PorUrl } = require("../config/r2");
+
+// Junta todas las URLs de fotos/videos de un trabajo (nivel trabajo + items)
+function urlsDeFotos(trabajo) {
+  const urls = [];
+  (trabajo.fotos || []).forEach((f) => f?.driveUrl && urls.push(f.driveUrl));
+  (trabajo.items || []).forEach((it) =>
+    (it.fotos || []).forEach((f) => f?.driveUrl && urls.push(f.driveUrl))
+  );
+  return urls;
+}
 
 // Excluye base64 de fotos — solo guarda metadatos
 function sanitizarFotos(fotos = []) {
@@ -65,6 +76,14 @@ const actualizarTrabajoService = async (id, datos) => {
 const eliminarTrabajoService = async (id) => {
   const trabajo = await Trabajo.findByIdAndDelete(id);
   if (!trabajo) return { statusCode: 404, msg: "Trabajo no encontrado" };
+
+  // Borra los archivos en R2 (best-effort). Esperamos a que termine porque en
+  // serverless el proceso puede cortarse al responder. Las URLs que no sean de
+  // R2 (Cloudinary viejas) se ignoran solas.
+  if ((process.env.STORAGE_DRIVER || "").toLowerCase() === "r2") {
+    await Promise.allSettled(urlsDeFotos(trabajo).map(borrarDeR2PorUrl));
+  }
+
   return { statusCode: 200, msg: "Trabajo eliminado correctamente" };
 };
 
