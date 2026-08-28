@@ -1,6 +1,7 @@
 const argon = require("argon2");
 const jwt = require("jsonwebtoken");
 const usuariosModel = require("../models/usuarios.model");
+const accesoLogModel = require("../models/accesoLog.model");
 
 const crearUsuarioService = async (body) => {
   try {
@@ -163,6 +164,14 @@ const iniciarSesionService = async (body) => {
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
+
+    accesoLogModel.create({
+      usuario: usuarioExiste._id,
+      nombre: usuarioExiste.nombre,
+      apellido: usuarioExiste.apellido,
+      email: usuarioExiste.email,
+      rol: usuarioExiste.rol,
+    }).catch((error) => console.error("Error al registrar acceso:", error));
 
     return {
       msg: `¡Bienvenido de nuevo, ${usuarioExiste.nombre}!`,

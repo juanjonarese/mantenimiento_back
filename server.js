@@ -61,6 +61,7 @@ app.use("/api/tipos-tarea", require("./routes/tiposTarea.routes"));
 app.use("/api/materiales", require("./routes/materialCatalogo.routes"));
 app.use("/api/clientes",  require("./routes/clientes.routes"));
 app.use("/api/fotos",    require("./routes/fotos.routes"));
+app.use("/api/accesos",  require("./routes/accesos.routes"));
 
 // Ruta de prueba
 app.get("/", (req, res) => {
