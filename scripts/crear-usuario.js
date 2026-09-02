@@ -3,15 +3,25 @@ const mongoose = require("mongoose");
 const argon2 = require("argon2");
 const usuariosModel = require("../models/usuarios.model");
 
+// Los datos se pasan por variables de entorno para no dejar credenciales en el código:
+// ADMIN_EMAIL=admin@empresa.com ADMIN_PASSWORD=Clave123 node scripts/crear-usuario.js
 const NUEVO_USUARIO = {
-  nombre: "Juanjo",
-  apellido: "Narese",
-  email: "juanjo.narese@gmail.com",
-  password: "Admin159",
+  nombre: process.env.ADMIN_NOMBRE || "Admin",
+  apellido: process.env.ADMIN_APELLIDO || "Sistema",
+  email: process.env.ADMIN_EMAIL,
+  password: process.env.ADMIN_PASSWORD,
   rol: "admin",
 };
 
 async function main() {
+  if (!NUEVO_USUARIO.email || !NUEVO_USUARIO.password) {
+    console.error(
+      "Faltan datos. Ejecutá:\n" +
+      "  ADMIN_EMAIL=admin@empresa.com ADMIN_PASSWORD=Clave123 node scripts/crear-usuario.js"
+    );
+    process.exit(1);
+  }
+
   await mongoose.connect(process.env.MONGO_CONNECT);
   console.log("Conectado a MongoDB");
 

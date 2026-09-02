@@ -2,9 +2,15 @@ require("dotenv").config({ path: require("path").join(__dirname, "../.env") });
 const mongoose = require("mongoose");
 const usuariosModel = require("../models/usuarios.model");
 
-const EMAIL = "juanjo.narese@gmail.com";
+// Uso: ADMIN_EMAIL=usuario@empresa.com node scripts/hacer-admin.js
+const EMAIL = process.env.ADMIN_EMAIL;
 
 async function main() {
+  if (!EMAIL) {
+    console.error("Falta el email. Ejecutá:\n  ADMIN_EMAIL=usuario@empresa.com node scripts/hacer-admin.js");
+    process.exit(1);
+  }
+
   await mongoose.connect(process.env.MONGO_CONNECT);
   console.log("Conectado a MongoDB");
 
