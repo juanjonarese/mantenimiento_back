@@ -4,8 +4,9 @@ yarn.lock
 
 # Variables de entorno
 .env
-.env.local
-.env.production
+.env.*
+*.env
+!.env.example
 
 # Backups de la base de datos
 backups/
