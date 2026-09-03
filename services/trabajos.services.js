@@ -59,14 +59,14 @@ const crearTrabajoService = async (datos) => {
 };
 
 const actualizarTrabajoService = async (id, datos) => {
+  const update = { ...datos, fechaModificacion: new Date() };
+  if (datos.fotos !== undefined) {
+    update.fotos = sanitizarFotos(datos.fotos);
+    update.cantFotos = datos.fotos.length;
+  }
   const trabajo = await Trabajo.findByIdAndUpdate(
     id,
-    {
-      ...datos,
-      fotos: sanitizarFotos(datos.fotos),
-      cantFotos: datos.fotos?.length || 0,
-      fechaModificacion: new Date(),
-    },
+    update,
     { new: true, runValidators: true }
   );
   if (!trabajo) return { statusCode: 404, msg: "Trabajo no encontrado" };

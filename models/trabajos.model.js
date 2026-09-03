@@ -54,6 +54,7 @@ const TrabajoSchema = new Schema({
     enum: ['Sin certificar', 'En revisión', 'Certificado', 'Rechazado', 'Facturado'],
     default: 'Sin certificar',
   },
+  nroCertificado: { type: String },
   motivoRechazo: { type: String },
   documentacionCertificacion: { type: String },
   notasCertificacion: { type: String },
