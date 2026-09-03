@@ -32,3 +32,6 @@ Thumbs.db
 dist/
 build/
 scripts/migracion-r2-*.json
+
+# Documentacion con credenciales de produccion — nunca versionar
+DOCUMENTACION-APP-CREA.md
